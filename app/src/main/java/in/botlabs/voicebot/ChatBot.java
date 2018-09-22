@@ -14,6 +14,7 @@ import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -35,6 +36,8 @@ import com.cloudant.client.api.ClientBuilder;
 import com.cloudant.client.api.CloudantClient;
 import com.cloudant.client.api.Database;
 import com.cloudant.client.org.lightcouch.CouchDbException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.ibm.watson.developer_cloud.assistant.v1.Assistant;
 import com.ibm.watson.developer_cloud.assistant.v1.model.InputData;
 import com.ibm.watson.developer_cloud.assistant.v1.model.MessageOptions;
@@ -42,8 +45,12 @@ import com.ibm.watson.developer_cloud.assistant.v1.model.MessageResponse;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import in.botlabs.voicebot.Adapters.ChatArrayAdapter;
 import in.botlabs.voicebot.Helper.ImageFilePath;
@@ -78,12 +85,10 @@ public class ChatBot extends AppCompatActivity {
     ImageView camera;
     String category = "", description = "", username = "", age = "", status = "False";
     String RESPONSE_FLAG = "False";
-    String nearbyName;
-    String nearbyAddress;
     String nearbyImageUrl;
-    SharedPreferences shared_Details;
-    SharedPreferences.Editor edit_Details;
-    String prefs;
+    SharedPreferences shared_Details, shared_seat;
+    SharedPreferences.Editor edit_Details, edit_seat;
+    String prefs, seat;
 
     String picturePath;
     Uri imageUri;
@@ -113,7 +118,6 @@ public class ChatBot extends AppCompatActivity {
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
 
-        getNearby();
 
         service = new Assistant("2018-02-16");
         service.setUsernameAndPassword("03eb2ad5-8f4a-4104-9a2c-0434d485fc13", "2Q2e4al2pWzg");
@@ -127,10 +131,14 @@ public class ChatBot extends AppCompatActivity {
         shared_Details = getSharedPreferences("Details", Context.MODE_PRIVATE);
         edit_Details = shared_Details.edit();
 
-        username = shared_Details.getString("name", "Bhavya");
-        age = shared_Details.getString("age", "21");
-        prefs = shared_Details.getString("prefs", "Food");
+        shared_seat = getSharedPreferences("SeatInfo",MODE_PRIVATE);
+        edit_seat = shared_seat.edit();
 
+        username = shared_Details.getString("name", "Bhavya");
+        prefs = shared_Details.getString("preference", "Veg");
+        seat = shared_seat.getString("seatNo","0");
+
+        sendChatMessageToTheScreen();
 
         chatArrayAdapter = new ChatArrayAdapter(getApplicationContext(), R.layout.right);
         messageListView.setAdapter(chatArrayAdapter);
@@ -168,7 +176,7 @@ public class ChatBot extends AppCompatActivity {
             }
         });
 
-        sendChatMessageFromTheCall("Hi!\nI'm ZooZoo Bot.\nI can assist you with:\n 1.Your queries\n2.Latest Offers\n3.Offers on nearby places\n4.Register a complaint", 2);
+       // sendChatMessageFromTheCall("Hi!\nI'm ZooZoo Bot.\nI can assist you with:\n 1.Your queries\n2.Latest Offers\n3.Offers on nearby places\n4.Register a complaint", 2);
         camera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -261,15 +269,18 @@ public class ChatBot extends AppCompatActivity {
     }
 
     private boolean sendChatMessageToTheScreen() {
-        chatArrayAdapter.add(new ChatMessage(side, chatText.getText().toString(), picturePath, null));
         String data = chatText.getText().toString().trim();
-
+        if(!data.equals("")) {
+            chatArrayAdapter.add(new ChatMessage(side, chatText.getText().toString(), picturePath, null));
+        }
         InputData input = new InputData.Builder(data).build();
         if (responseContext == null) {
 
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            responseContext = gson.fromJson("{\"username\":\""+username+"\",\"preference\":\"" + prefs + "\",\"seatnumber\":\"" + seat + "\"}", com.ibm.watson.developer_cloud.assistant.v1.model.Context.class);
             //send seat number name prefs in context here
             options = new MessageOptions.Builder("7bc662e1-dca9-44ea-9d0e-9dd75a0bacad")
-                    .input(input)
+                    .input(input).context(responseContext)
                     .build();
         } else {
             options = new MessageOptions.Builder("7bc662e1-dca9-44ea-9d0e-9dd75a0bacad")
@@ -526,46 +537,32 @@ public class ChatBot extends AppCompatActivity {
 
     }
 
-    private void getNearby() {
-        System.out.println("in Retrofit");
-        API api = retroClient.getApiService();
-        api.getNearestPlaces("AIzaSyAEemCMD_nwJly4oItZCGO8DL3Nvu4ZTmQ", "false", "12.9869188,77.7336945", "47022", "Food").enqueue(new Callback<ResultModel>() {
-            @Override
-            public void onResponse(Call<ResultModel> call, Response<ResultModel> response) {
 
-                if (response.isSuccessful()) {
-                    if (response.code() != 200) {
+}
 
-                    } else {
+final class MyEntry<K, V> implements Map.Entry<K, V> {
+    private final K key;
+    private V value;
 
-                        sendChatMessageFromTheCall("Some Nearby places, you would like to visit!", 2);
-
-                        nearbyName = response.body().getResults().get(0).getName();
-
-                        nearbyAddress = response.body().getResults().get(0).getVicinity();
-
-                        nearbyImageUrl = response.body().getResults().get(0).getIcon();
-
-
-                        sendChatMessageFromTheCall(nearbyName + "\n" + nearbyAddress, 3);
-
-                    }
-                } else {
-                    System.out.println("unsuccessful");
-
-                }
-            }
-
-
-            @Override
-            public void onFailure(Call<ResultModel> call, Throwable t) {
-                System.out.println("Fail");
-                System.out.println(t.getCause());
-
-                Toast.makeText(ChatBot.this, "Internet connection failed", Toast.LENGTH_SHORT).show();
-            }
-        });
-
+    public MyEntry(K key, V value) {
+        this.key = key;
+        this.value = value;
     }
 
+    @Override
+    public K getKey() {
+        return key;
+    }
+
+    @Override
+    public V getValue() {
+        return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+        V old = this.value;
+        this.value = value;
+        return old;
+    }
 }

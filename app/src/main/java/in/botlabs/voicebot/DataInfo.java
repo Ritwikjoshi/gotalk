@@ -36,7 +36,7 @@ public class DataInfo extends AppCompatActivity {
         submit = findViewById(R.id.submitUserInfo);
         nameEt = findViewById(R.id.name);
 
-        shared_user = getSharedPreferences("UserInfo", MODE_PRIVATE);
+        shared_user = getSharedPreferences("Details", MODE_PRIVATE);
         edit_user = shared_user.edit();
 
         prefsList.add("Veg");

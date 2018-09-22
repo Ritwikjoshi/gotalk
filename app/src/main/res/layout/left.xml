@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="5dp"
+    android:layout_marginRight="20dp"
+    android:layout_marginTop="4dp"
+    android:layout_gravity="left"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:src="@drawable/zoozoo"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:background="@drawable/leftrectangle"
+        android:orientation="vertical">
+    <TextView
+        android:id="@+id/msgr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="5dp"
+        android:textSize="22sp"
+        android:text="Sampleleft"
+        android:textColor="@color/colorBlack"
+        android:fontFamily="sans-serif-condensed"/>
+
+    <!--<android.support.v7.widget.AppCompatButton-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:background="@color/colorPrimary"-->
+        <!--android:text="AvailOffer!"-->
+        <!--android:id="@+id/availOffer"-->
+        <!--android:visibility="gone"-->
+        <!--android:layout_marginHorizontal="8dp"-->
+        <!--android:textSize="16sp"-->
+        <!--android:layout_marginVertical="8dp"-->
+        <!--android:textColor="@color/colorWhite"/>-->
+    </LinearLayout>
+</LinearLayout>
+</RelativeLayout>

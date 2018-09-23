@@ -13,41 +13,35 @@ public class ComplaintModel {
     @Expose
     private String rev;
 
-    @SerializedName("category")
+    @SerializedName("fooditem")
     @Expose
-    private String category;
-
-    @SerializedName("complain_description")
-    @Expose
-    private String description;
+    private String fooditem;
 
     @SerializedName("username")
     @Expose
     private String username;
 
-    @SerializedName("age")
+    @SerializedName("seatnumber")
     @Expose
-    private String age;
+    private String seatnumber;
 
     @SerializedName("status")
     @Expose
     private String status;
 
-    public ComplaintModel(String id, String rev, String category, String description, String username, String age, String status) {
+    public ComplaintModel(String id, String rev, String fooditem, String username, String seatnumber, String status) {
         this.id = id;
         this.rev = rev;
-        this.category = category;
-        this.description = description;
+        this.fooditem = fooditem;
         this.username = username;
-        this.age = age;
+        this.seatnumber = seatnumber;
         this.status = status;
     }
 
-    public ComplaintModel(String category, String description, String username, String age, String status) {
-        this.category = category;
-        this.description = description;
+    public ComplaintModel(String fooditem, String username, String age, String status) {
         this.username = username;
-        this.age = age;
+        this.fooditem = fooditem;
+        this.seatnumber = age;
         this.status = status;
     }
 
@@ -67,20 +61,12 @@ public class ComplaintModel {
         this.rev = rev;
     }
 
-    public String getCategory() {
-        return category;
+    public String getFooditem() {
+        return fooditem;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public void setFooditem(String fooditem) {
+        this.fooditem = fooditem;
     }
 
     public String getUsername() {
@@ -91,12 +77,12 @@ public class ComplaintModel {
         this.username = username;
     }
 
-    public String getAge() {
-        return age;
+    public String getSeatnumber() {
+        return seatnumber;
     }
 
-    public void setAge(String age) {
-        this.age = age;
+    public void setSeatnumber(String seatnumber) {
+        this.seatnumber = seatnumber;
     }
 
     public String getStatus() {

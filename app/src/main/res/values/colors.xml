@@ -3,12 +3,12 @@
     <!--<color name="colorPrimary">#ff0000</color>-->
     <!--<color name="colorPrimaryDark">#c0373b</color>-->
     <!--<color name="colorAccent">#ff0000</color>-->
-    <color name="colorWhite">#ffffff</color>
+    <color name="colorWhite">#DFF8EB</color>
     <color name="colorPrimaryLight">#898DD3</color>
     <color name="colorBlack">#191818</color>
     <color name="colorGrey">#737171</color>
-    <color name="colorPrimary">#2B2E76</color>
-    <color name="colorPrimaryDark">#5C62C5</color>
-    <color name="colorAccent">#2B2E76</color>
+    <color name="colorPrimary">#2c3a97</color>
+    <color name="colorPrimaryDark">#222d73</color>
+    <color name="colorAccent">#FE5F55</color>
 
 </resources>

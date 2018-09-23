@@ -12,16 +12,16 @@
 
     <application android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <activity android:name=".ChatBot" />
-        <activity android:name=".SeatInfo" >
-
+        <activity android:name=".SeatInfo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
-        <activity android:name=".DataInfo"></activity>
+        <activity android:name=".DataInfo" />
+        <activity android:name=".VideoActivity" />
+        <activity android:name=".NewsActivity"></activity>
     </application>
 
 </manifest>

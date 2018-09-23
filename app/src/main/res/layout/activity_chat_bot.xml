@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,6 +7,11 @@
     tools:context="in.botlabs.voicebot.ChatBot">
 
 
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
     <android.support.v7.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -50,6 +55,7 @@
         android:id="@+id/imageView2"
         android:layout_width="35dp"
         android:layout_height="35dp"
+        android:tint="@color/colorAccent"
         android:src="@drawable/nosmoking"
         android:layout_margin="8dp"/>
 
@@ -58,6 +64,7 @@
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_margin="8dp"
+        android:tint="@color/colorAccent"
         android:src="@drawable/seatbelt" />
     </LinearLayout>
 </RelativeLayout>
@@ -110,15 +117,15 @@
                 android:background="@drawable/editrectangle"
                 />
 
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="44dp"
-                android:id="@+id/camera"
-                android:layout_gravity="center_vertical"
-                android:tint="@color/colorGrey"
-                android:padding="8dp"
-                android:src="@drawable/ic_action_camera"/>
+            <!--<ImageView-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_weight="1"-->
+                <!--android:layout_height="44dp"-->
+                <!--android:id="@+id/camera"-->
+                <!--android:layout_gravity="center_vertical"-->
+                <!--android:tint="@color/colorGrey"-->
+                <!--android:padding="8dp"-->
+                <!--android:src="@drawable/ic_action_camera"/>-->
             </LinearLayout>
 
         </android.support.v7.widget.CardView>
@@ -143,3 +150,41 @@
             android:src="@drawable/circlesend" />
     </LinearLayout>
 </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/gridLinear"
+        android:visibility="gone"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:id="@+id/closegrid"
+                android:src="@drawable/ic_action_closegrid"
+                android:tint="@color/colorBlack"/>
+
+        </android.support.v7.widget.CardView>
+
+    <GridView
+        android:id="@+id/gridview"
+        android:paddingTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="5"
+        android:columnWidth="80dp"
+        android:numColumns="2"
+        android:background="#ffffff"
+        android:verticalSpacing="2dp"
+        android:horizontalSpacing="2dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"></GridView>
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -8,28 +8,30 @@ import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.StrictMode;
-import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AbsListView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+
+import in.botlabs.voicebot.Adapters.CustomEntityAdapter;
 import in.botlabs.voicebot.Helper.WatsonCall;
-import in.botlabs.voicebot.Retrofit.retroClient;
 
 
 import com.cloudant.client.api.ClientBuilder;
@@ -38,6 +40,9 @@ import com.cloudant.client.api.Database;
 import com.cloudant.client.org.lightcouch.CouchDbException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.ibm.watson.developer_cloud.assistant.v1.Assistant;
 import com.ibm.watson.developer_cloud.assistant.v1.model.InputData;
 import com.ibm.watson.developer_cloud.assistant.v1.model.MessageOptions;
@@ -45,22 +50,22 @@ import com.ibm.watson.developer_cloud.assistant.v1.model.MessageResponse;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import in.botlabs.voicebot.Adapters.ChatArrayAdapter;
 import in.botlabs.voicebot.Helper.ImageFilePath;
 import in.botlabs.voicebot.Model.ComplaintModel;
-import in.botlabs.voicebot.Model.ResultModel;
+import in.botlabs.voicebot.Model.NewsModel;
 import in.botlabs.voicebot.Objects.ChatMessage;
+
+import in.botlabs.voicebot.Objects.suggestionsObject;
 import in.botlabs.voicebot.Retrofit.API;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import in.botlabs.voicebot.Retrofit.retroClient;
 
 public class ChatBot extends AppCompatActivity {
 
@@ -68,31 +73,37 @@ public class ChatBot extends AppCompatActivity {
     private static final String TAG = "ChatActivity";
 //    private static final String ChatBotUrl ="https://gateway-syd.watsonplatform.net/assistant/api";
 
-    private ChatArrayAdapter chatArrayAdapter;
+    private static ChatArrayAdapter chatArrayAdapter;
     private ImageView sendButton, mic;
     private EditText chatText;
     private ListView messageListView;
-    private boolean side = true;
+    static private boolean side = true;
     final int REQ_CODE_SPEECH_INPUT = 0;
     Assistant service;
     MessageOptions options;
     MessageResponse response;
     private static final int CAMERA_REQUEST = 1;
     TextToSpeech tts;
-    String fortts = "", ImageUrl, openAppUrl;
-    com.ibm.watson.developer_cloud.assistant.v1.model.Context responseContext = null;
+    static String fortts = "", ImageUrl, openAppUrl;
+    static com.ibm.watson.developer_cloud.assistant.v1.model.Context responseContext = null;
     int QUERY_FLAG = 0;
     ImageView camera;
-    String category = "", description = "", username = "", age = "", status = "False";
+    static String fooditem = "", description = "", username = "", seatnumber = "", status = "False";
     String RESPONSE_FLAG = "False";
-    String nearbyImageUrl;
+    static String nearbyImageUrl;
     SharedPreferences shared_Details, shared_seat;
     SharedPreferences.Editor edit_Details, edit_seat;
-    String prefs, seat;
+    static String prefs, seat, genre;
+    GridView gridview;
+    ImageView closeGrid;
+    static LinearLayout gridLinear;
 
+    ArrayList<suggestionsObject> items = new ArrayList<suggestionsObject>();
     String picturePath;
     Uri imageUri;
     private File output = null;
+
+    NewsModel model;
 
 
     @Override
@@ -126,7 +137,11 @@ public class ChatBot extends AppCompatActivity {
         chatText = (EditText) findViewById(R.id.chatText);
         sendButton = (ImageView) findViewById(R.id.sendButton);
         messageListView = (ListView) findViewById(R.id.messageListView);
-        camera = findViewById(R.id.camera);
+        gridview = findViewById(R.id.gridview);
+        closeGrid = findViewById(R.id.closegrid);
+        gridLinear = findViewById(R.id.gridLinear);
+
+//        camera = findViewById(R.id.camera);
 
         shared_Details = getSharedPreferences("Details", Context.MODE_PRIVATE);
         edit_Details = shared_Details.edit();
@@ -136,6 +151,7 @@ public class ChatBot extends AppCompatActivity {
 
         username = shared_Details.getString("name", "Bhavya");
         prefs = shared_Details.getString("preference", "Veg");
+        genre = shared_Details.getString("movies", "Sufi");
         seat = shared_seat.getString("seatNo","0");
 
         sendChatMessageToTheScreen();
@@ -177,18 +193,18 @@ public class ChatBot extends AppCompatActivity {
         });
 
        // sendChatMessageFromTheCall("Hi!\nI'm ZooZoo Bot.\nI can assist you with:\n 1.Your queries\n2.Latest Offers\n3.Offers on nearby places\n4.Register a complaint", 2);
-        camera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-                File dir =
-                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
-
-                output = new File(dir, String.valueOf(System.currentTimeMillis()) + ".jpeg");
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(output));
-                startActivityForResult(intent, CAMERA_REQUEST);
-            }
-        });
+//        camera.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+//                File dir =
+//                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+//
+//                output = new File(dir, String.valueOf(System.currentTimeMillis()) + ".jpeg");
+//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(output));
+//                startActivityForResult(intent, CAMERA_REQUEST);
+//            }
+//        });
 
         chatText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -239,8 +255,18 @@ public class ChatBot extends AppCompatActivity {
             @Override
             public void onClick(View arg0) {
                 if (chatText.getText().toString().length() > 0) {
-                    sendChatMessageToTheScreen();
-                    QUERY_FLAG = 1;
+                    if(chatText.getText().toString().trim().toLowerCase().contains("news"))
+                    {
+                        chatArrayAdapter.add(new ChatMessage(side, chatText.getText().toString(), picturePath, null));
+                        chatText.setText("");
+
+                        buildConnection();
+
+                    }
+                    else {
+                        sendChatMessageToTheScreen();
+                        QUERY_FLAG = 1;
+                    }
                 }
             }
         });
@@ -266,6 +292,13 @@ public class ChatBot extends AppCompatActivity {
             }
         });
 
+        closeGrid.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gridLinear.setVisibility(View.GONE);
+            }
+        });
+
     }
 
     private boolean sendChatMessageToTheScreen() {
@@ -277,7 +310,7 @@ public class ChatBot extends AppCompatActivity {
         if (responseContext == null) {
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            responseContext = gson.fromJson("{\"username\":\""+username+"\",\"preference\":\"" + prefs + "\",\"seatnumber\":\"" + seat + "\"}", com.ibm.watson.developer_cloud.assistant.v1.model.Context.class);
+            responseContext = gson.fromJson("{\"username\":\""+username+"\",\"preference\":\"" + prefs.toLowerCase() + "\",\"genre\":\""+genre.toLowerCase()+"\",\"seatnumber\":\"" + seat + "\"}", com.ibm.watson.developer_cloud.assistant.v1.model.Context.class);
             //send seat number name prefs in context here
             options = new MessageOptions.Builder("7bc662e1-dca9-44ea-9d0e-9dd75a0bacad")
                     .input(input).context(responseContext)
@@ -295,7 +328,7 @@ public class ChatBot extends AppCompatActivity {
     }
 
 
-    public boolean sendChatMessageFromTheCall(String reply, int call) {
+    public static boolean sendChatMessageFromTheCall(String reply, int call) {
         if (call == 1) {
             chatArrayAdapter.add(new ChatMessage(!side, reply, ImageUrl, openAppUrl));
         } else if (call == 2) {
@@ -319,6 +352,7 @@ public class ChatBot extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "speech_not_supported", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -429,8 +463,57 @@ public class ChatBot extends AppCompatActivity {
                                 if (!(response.getContext().get("openapp") == null)) {
                                     openAppUrl = response.getContext().get("openapp").toString().trim();
                                     System.out.println(openAppUrl);
+                                }
+                                if(!(response.getContext().get("menu") == null))
+                                {
+                                    JsonObject jsonContext = new JsonParser().parse(response.getContext().toString()).getAsJsonObject();
+                                    JsonArray jsonMenu =  jsonContext.get("menu").getAsJsonArray();
+
+                                    items.clear();
+                                    for(int j=0 ;j< jsonMenu.size();j++) {
+                                        JsonObject entityJson = jsonMenu.get(j).getAsJsonObject();
+                                        items.add(new suggestionsObject(entityJson.get("url").getAsString(),entityJson.get("price").getAsString(),entityJson.get("description").getAsString(),entityJson.get("itemname").getAsString(),"Image"));
+                                    }
+                                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.this, items);
+                                    gridview.setAdapter(customAdapter);
+                                    gridLinear.setVisibility(View.VISIBLE);
+                                    gridview.bringToFront();
+                                }
+
+                                if(!(response.getContext().get("playlist") == null)) {
+                                    JsonObject jsonContext = new JsonParser().parse(response.getContext().toString()).getAsJsonObject();
+                                    JsonArray jsonMenu = jsonContext.get("playlist").getAsJsonArray();
+
+                                    JsonObject jsonmovieContext = new JsonParser().parse(response.getContext().toString()).getAsJsonObject();
+                                    JsonArray jsonplay =  jsonContext.get("playlist").getAsJsonArray();
+
+                                    items.clear();
+                                    for(int j=0 ;j< jsonMenu.size();j++) {
+                                        JsonObject entityJson = jsonMenu.get(j).getAsJsonObject();
+                                        items.add(new suggestionsObject(entityJson.get("url").getAsString(),entityJson.get("videoname").getAsString(), "Video"));
+                                    }
+                                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.this, items);
+                                    gridview.setAdapter(customAdapter);
+                                    gridLinear.setVisibility(View.VISIBLE);
+                                    gridview.bringToFront();
+                                }
+
+                                if(!(response.getContext().get("options") == null)) {
+
+                                    JsonObject jsonContext = new JsonParser().parse(response.getContext().toString()).getAsJsonObject();
+                                    JsonArray jsoninstruct = jsonContext.get("options").getAsJsonArray();
+
+                                    ArrayList<String> instruct = new ArrayList<String>();
+                                    for(int j=0 ;j< jsoninstruct.size();j++) {
+                                       instruct.add(jsoninstruct.get(j).getAsString());
+                                    }
+
+
+
+                                    chatArrayAdapter.add(new ChatMessage(!side, instruct));
 
                                 }
+                                else
 
                                 sendChatMessageFromTheCall(res, 1);
                                 fortts = fortts + res + ",";
@@ -451,25 +534,26 @@ public class ChatBot extends AppCompatActivity {
                         RESPONSE_FLAG = "True";
                     }
 
-                    if (response.getContext().get("submitcomplaint") != null) {
-                        if (response.getContext().get("submitcomplaint").toString().equals("True")) {
-                            try {
-                                category = response.getContext().get("category").toString();
-                                description = response.getContext().get("description").toString();
-                                new AsyncCloudant().execute();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-                    }
+//                    if (response.getContext().get("orderfood") != null) {
+//                        if (response.getContext().get("orderfood").toString().equals("True")) {
+//                            try {
+//                                fooditem = response.getContext().get("fooditem").toString();
+//                                new AsyncCloudant().execute();
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//
+//                        }
+//                    }
 
                     System.out.println(response);
                     if (QUERY_FLAG == 0) {
                         HashMap<String, String> map = new HashMap<String, String>();
                         map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, System.currentTimeMillis() + "");
 
-                        tts.speak(fortts, TextToSpeech.QUEUE_FLUSH, map);
+                        if(gridLinear.getVisibility() == View.GONE) {
+                            tts.speak(fortts, TextToSpeech.QUEUE_FLUSH, map);
+                        }
                     }
                 }
 
@@ -489,7 +573,7 @@ public class ChatBot extends AppCompatActivity {
         super.onPause();
     }
 
-    private class AsyncCloudant extends AsyncTask<Void, Void, Void> {
+    private static class AsyncCloudant extends AsyncTask<Void, Void, Void> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -503,18 +587,16 @@ public class ChatBot extends AppCompatActivity {
             //this method will be running on background thread so don't update UI frome here
             //do your long running http tasks here,you dont want to pass argument and u can access the parent class' variable url over here
             try {
-                CloudantClient client = ClientBuilder.account("59cde6d4-f925-4a3d-85bb-9a1314f29e06-bluemix")
-                        .username("59cde6d4-f925-4a3d-85bb-9a1314f29e06-bluemix")
-                        .password("86ddf880d33529aa6367fc90ef808f63bd76530df5818352b01e608bbf1c8e16")
+                CloudantClient client = ClientBuilder.account("b0d8c6c3-d4c4-4029-95f8-a9dcba368f8f-bluemix")
+                        .username("b0d8c6c3-d4c4-4029-95f8-a9dcba368f8f-bluemix")
+                        .password("150e8a78ab2aa45424603cf097b8a8ccdfbc6b09ac3994ee784e092319519da0")
                         .build();
 
                 System.out.println("Server Version: " + client.serverVersion());
 
-                Database db = client.database("user_complains", false);
+                Database db = client.database("food-orders", false);
 
-
-                ComplaintModel complaint = new ComplaintModel(category, description, username, age, status);
-
+                ComplaintModel complaint = new ComplaintModel(fooditem, username, seat, status);
 
                 db.save(complaint);
             } catch (CouchDbException e) {
@@ -537,32 +619,68 @@ public class ChatBot extends AppCompatActivity {
 
     }
 
+    public static void orderFood(String foodItem, Context context)
+    {
+        fooditem = foodItem;
+
+        gridLinear.setVisibility(View.GONE);
+
+        sendChatMessageFromTheCall("Your order for "+foodItem +" has been placed Successfully.",2);
+
+        Toast.makeText(context, foodItem +" ordered Successfully.", Toast.LENGTH_SHORT).show();
+        new AsyncCloudant().execute();
+    }
+
+    @Override
+    public void onBackPressed() {
+
+    }
+
+    private void buildConnection() {
+
+        API api = retroClient.getApiService();
+
+
+
+        api.getNews().enqueue(new Callback<NewsModel>() {
+            @Override
+            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+
+                //Dismiss Dialog
+
+                if (response.isSuccessful()) {
+
+                    model = response.body();
+
+                    items.clear();
+
+                    for(int i = 0; i< model.getArticles().size(); i++) {
+                        items.add(new suggestionsObject(model.getArticles().get(i).getUrlToImage(), model.getArticles().get(i).getTitle(),model.getArticles().get(i).getDescription(), "News"));
+                    }
+
+                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.this, items);
+                    gridview.setAdapter(customAdapter);
+                    gridLinear.setVisibility(View.VISIBLE);
+                    gridview.bringToFront();
+
+
+                }
+                else
+                {
+                    Log.d("response",response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NewsModel> call, Throwable t) {
+
+                Log.d("Error Message", "Unable to submit post to API.");
+            }
+
+        });
+    }
+
 
 }
 
-final class MyEntry<K, V> implements Map.Entry<K, V> {
-    private final K key;
-    private V value;
-
-    public MyEntry(K key, V value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    @Override
-    public K getKey() {
-        return key;
-    }
-
-    @Override
-    public V getValue() {
-        return value;
-    }
-
-    @Override
-    public V setValue(V value) {
-        V old = this.value;
-        this.value = value;
-        return old;
-    }
-}
+//rohit@edugorilla.com

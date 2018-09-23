@@ -7,6 +7,9 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +40,7 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
 
     private TextView chatText;
     private ImageView chatImage;
+    RecyclerView optionsRecycler;
     private List<ChatMessage> chatMessageList = new ArrayList<ChatMessage>();
     private Context context;
     ProgressBar progress;
@@ -90,15 +94,27 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
             System.out.println(chatMessageObj.imageUrl);
 
 
-        }else if((!chatMessageObj.left)&&(chatMessageObj.imageUrl == null)){
+        }else if((!chatMessageObj.left)&&(chatMessageObj.imageUrl == null)&&chatMessageObj.options == null)
+        {
             row = inflater.inflate(R.layout.left, parent, false);
+        }
+        else if((!chatMessageObj.left)&&chatMessageObj.options != null)
+        {
+            row = inflater.inflate(R.layout.left, parent, false);
+            optionsRecycler.setVisibility(View.VISIBLE);
+            progress.setVisibility(View.GONE);
+            chatImage.setVisibility(View.GONE);
+            chatText.setVisibility(View.GONE);
+
         }
         else{
             row = inflater.inflate(R.layout.image_left, parent, false);
             chatImage = row.findViewById(R.id.imgmsgr);
             progress = row.findViewById(R.id.imageProgress);
+            optionsRecycler = row.findViewById(R.id.horizontalRecycler);
             progress.setVisibility(View.GONE);
             chatImage.setVisibility(View.GONE);
+            optionsRecycler.setVisibility(View.GONE);
             try {
                 newurl = new URL(chatMessageObj.imageUrl);
                 chatImage.setVisibility(View.VISIBLE);
@@ -134,6 +150,15 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
                     Toast.makeText(context, "opening Vodafone application", Toast.LENGTH_SHORT).show();
                 }
             });
+        }
+
+        if(chatMessageObj.options != null)
+        {
+            optionsRecycler.addItemDecoration(new DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL));
+            optionsAdapter = new OptionsAdapter(chatMessageObj.options, context);
+            LinearLayoutManager horizontalLayoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
+            optionsRecycler.setLayoutManager(horizontalLayoutManager);
+            optionsRecycler.setAdapter(optionsAdapter);
         }
         return row;
     }

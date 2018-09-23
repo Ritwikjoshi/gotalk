@@ -16,16 +16,23 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class DataInfo extends AppCompatActivity {
-    Spinner prefsSpin;
+    Spinner prefsSpin, moviesSpin;
     ArrayAdapter<String> prefsAdapter;
+    ArrayAdapter<String> movieprefsAdapter;
     ArrayList<String> prefsList = new ArrayList <String>();
+    ArrayList<String> movieprefsList = new ArrayList <String>();
 
     AppCompatButton submit;
     EditText nameEt;
-    String name,preference = "Veg";
+    String name,preference = "Veg", movies = "Sufi";
 
     SharedPreferences shared_user;
     SharedPreferences.Editor edit_user;
+
+    @Override
+    public void onBackPressed() {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +42,7 @@ public class DataInfo extends AppCompatActivity {
         prefsSpin = findViewById(R.id.food_list);
         submit = findViewById(R.id.submitUserInfo);
         nameEt = findViewById(R.id.name);
+        moviesSpin = findViewById(R.id.movieList);
 
         shared_user = getSharedPreferences("Details", MODE_PRIVATE);
         edit_user = shared_user.edit();
@@ -44,8 +52,14 @@ public class DataInfo extends AppCompatActivity {
         prefsList.add("Jain");
         prefsList.add("Diet");
 
+        movieprefsList.add("Sufi");
+        movieprefsList.add("Bollywood");
+
         prefsAdapter = new ArrayAdapter<String>(DataInfo.this, R.layout.prefs_list_item, prefsList);
         prefsSpin.setAdapter(prefsAdapter);
+
+        movieprefsAdapter = new ArrayAdapter<String>(DataInfo.this, R.layout.prefs_list_item, movieprefsList);
+        moviesSpin.setAdapter(movieprefsAdapter);
 
         prefsSpin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -55,6 +69,19 @@ public class DataInfo extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        moviesSpin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+
+                movies = moviesSpin.getItemAtPosition(i).toString().trim();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
 
             }
         });
@@ -71,6 +98,7 @@ public class DataInfo extends AppCompatActivity {
                 {
                     edit_user.putString("name",name);
                     edit_user.putString("preference",preference);
+                    edit_user.putString("movies",movies);
                     edit_user.apply();
                     Intent i = new Intent(DataInfo.this,ChatBot.class);
                     startActivity(i);

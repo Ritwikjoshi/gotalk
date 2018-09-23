@@ -11,6 +11,8 @@ public class ChatMessage {
     public String message;
     public String imageUrl,openapp;
     public List<String> options;
+    public List<String> imageOptions;
+
 
     public ChatMessage(boolean left, String message, String imageUrl,String openapp) {
         super();
@@ -20,10 +22,11 @@ public class ChatMessage {
         this.openapp = openapp;
     }
 
-    public ChatMessage(boolean left, List<String> message) {
+    public ChatMessage(boolean left, List<String> options, List<String> imageOptions) {
         super();
         this.left = left;
-        this.options = message;
+        this.options = options;
+        this.imageOptions = imageOptions;
     }
 }
 

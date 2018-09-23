@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import in.botlabs.voicebot.Objects.ChatMessage;
+import in.botlabs.voicebot.Objects.OptionsObject;
 import in.botlabs.voicebot.R;
 
 /**
@@ -41,7 +42,9 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
     private TextView chatText;
     private ImageView chatImage;
     RecyclerView optionsRecycler;
+    OptionsAdapter optionsAdapter;
     private List<ChatMessage> chatMessageList = new ArrayList<ChatMessage>();
+    List<OptionsObject> optionsObjectList = new ArrayList<OptionsObject>();
     private Context context;
     ProgressBar progress;
     AppCompatButton availBtn;
@@ -101,9 +104,9 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
         else if((!chatMessageObj.left)&&chatMessageObj.options != null)
         {
             row = inflater.inflate(R.layout.left, parent, false);
+            optionsRecycler = row.findViewById(R.id.horizontalRecycler);
+            chatText = (TextView) row.findViewById(R.id.msgr);
             optionsRecycler.setVisibility(View.VISIBLE);
-            progress.setVisibility(View.GONE);
-            chatImage.setVisibility(View.GONE);
             chatText.setVisibility(View.GONE);
 
         }
@@ -137,29 +140,37 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
         }
 
 
-
-        chatText = (TextView) row.findViewById(R.id.msgr);
-        if(chatText!=null) {
-            chatText.setText(chatMessageObj.message.replace("\\n", "\n"));
-        }
-
-        if(availBtn != null) {
-            availBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(context, "opening Vodafone application", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
         if(chatMessageObj.options != null)
         {
+            optionsObjectList.clear();
+
+            for(int i =0; i< chatMessageObj.options.size();i++)
+            {
+                optionsObjectList.add(new OptionsObject(chatMessageObj.options.get(i),chatMessageObj.imageOptions.get(i)));
+            }
             optionsRecycler.addItemDecoration(new DividerItemDecoration(context, LinearLayoutManager.HORIZONTAL));
-            optionsAdapter = new OptionsAdapter(chatMessageObj.options, context);
+            optionsAdapter = new OptionsAdapter(optionsObjectList, context);
             LinearLayoutManager horizontalLayoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
             optionsRecycler.setLayoutManager(horizontalLayoutManager);
             optionsRecycler.setAdapter(optionsAdapter);
+        }else {
+
+            chatText = (TextView) row.findViewById(R.id.msgr);
+            if (chatText != null) {
+                chatText.setText(chatMessageObj.message.replace("\\n", "\n"));
+            }
+
+            if (availBtn != null) {
+                availBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(context, "opening Vodafone application", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         }
+
+
         return row;
     }
 

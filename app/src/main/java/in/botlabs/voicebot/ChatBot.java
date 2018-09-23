@@ -75,31 +75,32 @@ public class ChatBot extends AppCompatActivity {
 
     private static ChatArrayAdapter chatArrayAdapter;
     private ImageView sendButton, mic;
-    private EditText chatText;
+    private static EditText chatText;
     private ListView messageListView;
     static private boolean side = true;
     final int REQ_CODE_SPEECH_INPUT = 0;
-    Assistant service;
-    MessageOptions options;
-    MessageResponse response;
+    static Context context;
+    static Assistant service;
+    static MessageOptions options;
+
     private static final int CAMERA_REQUEST = 1;
-    TextToSpeech tts;
+    static TextToSpeech tts;
     static String fortts = "", ImageUrl, openAppUrl;
     static com.ibm.watson.developer_cloud.assistant.v1.model.Context responseContext = null;
-    int QUERY_FLAG = 0;
+    static int QUERY_FLAG = 0;
     ImageView camera;
     static String fooditem = "", description = "", username = "", seatnumber = "", status = "False";
-    String RESPONSE_FLAG = "False";
+    static String RESPONSE_FLAG = "False";
     static String nearbyImageUrl;
     SharedPreferences shared_Details, shared_seat;
     SharedPreferences.Editor edit_Details, edit_seat;
     static String prefs, seat, genre;
-    GridView gridview;
+    static GridView gridview;
     ImageView closeGrid;
     static LinearLayout gridLinear;
 
-    ArrayList<suggestionsObject> items = new ArrayList<suggestionsObject>();
-    String picturePath;
+    static ArrayList<suggestionsObject> items = new ArrayList<suggestionsObject>();
+    static String picturePath;
     Uri imageUri;
     private File output = null;
 
@@ -110,6 +111,8 @@ public class ChatBot extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_bot);
+
+        context = ChatBot.this;
 
         getWindow().setBackgroundDrawableResource(R.drawable.back);
 
@@ -154,7 +157,7 @@ public class ChatBot extends AppCompatActivity {
         genre = shared_Details.getString("movies", "Sufi");
         seat = shared_seat.getString("seatNo","0");
 
-        sendChatMessageToTheScreen();
+        sendChatMessageToTheScreen(1,null);
 
         chatArrayAdapter = new ChatArrayAdapter(getApplicationContext(), R.layout.right);
         messageListView.setAdapter(chatArrayAdapter);
@@ -245,7 +248,7 @@ public class ChatBot extends AppCompatActivity {
         chatText.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    return sendChatMessageToTheScreen();
+                    return sendChatMessageToTheScreen(1, null);
                 }
                 return false;
             }
@@ -264,7 +267,7 @@ public class ChatBot extends AppCompatActivity {
 
                     }
                     else {
-                        sendChatMessageToTheScreen();
+                        sendChatMessageToTheScreen(1,null);
                         QUERY_FLAG = 1;
                     }
                 }
@@ -301,13 +304,31 @@ public class ChatBot extends AppCompatActivity {
 
     }
 
-    private boolean sendChatMessageToTheScreen() {
-        String data = chatText.getText().toString().trim();
-        if(!data.equals("")) {
-            chatArrayAdapter.add(new ChatMessage(side, chatText.getText().toString(), picturePath, null));
+    public static boolean sendChatMessageToTheScreen(int flag, String getdata) {
+       String data = "";
+        if(flag == 1) {
+            data = chatText.getText().toString().trim();
         }
+        else if(flag == 2)
+        {
+            data = getdata;
+        }
+        if(!data.equals("")) {
+            if(flag == 1) {
+                chatArrayAdapter.add(new ChatMessage(side, data, picturePath, null));
+            }
+
+        }
+        if(flag == 2)
+        {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            responseContext = gson.fromJson("{\"username\":\""+username+"\",\"preference\":\"" + prefs.toLowerCase() + "\",\"genre\":\""+genre.toLowerCase()+"\",\"seatnumber\":\"" + seat + "\"}", com.ibm.watson.developer_cloud.assistant.v1.model.Context.class);
+        }
+
         InputData input = new InputData.Builder(data).build();
         if (responseContext == null) {
+
+
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             responseContext = gson.fromJson("{\"username\":\""+username+"\",\"preference\":\"" + prefs.toLowerCase() + "\",\"genre\":\""+genre.toLowerCase()+"\",\"seatnumber\":\"" + seat + "\"}", com.ibm.watson.developer_cloud.assistant.v1.model.Context.class);
@@ -366,7 +387,7 @@ public class ChatBot extends AppCompatActivity {
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     chatText.setText(result.get(0));
                     if (chatText.getText().toString().length() > 0) {
-                        sendChatMessageToTheScreen();
+                        sendChatMessageToTheScreen(1,null);
                         chatText.setText("");
                     }
                 }
@@ -414,8 +435,8 @@ public class ChatBot extends AppCompatActivity {
 
     }
 
-    public class AsyncCaller extends AsyncTask<Void, Void, Void> {
-
+    public static class AsyncCaller extends AsyncTask<Void, Void, Void> {
+        MessageResponse response;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -424,6 +445,7 @@ public class ChatBot extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
+
 
             //this method will be running on background thread so don't update UI frome here
             //do your long running http tasks here,you dont want to pass argument and u can access the parent class' variable url over here
@@ -474,7 +496,7 @@ public class ChatBot extends AppCompatActivity {
                                         JsonObject entityJson = jsonMenu.get(j).getAsJsonObject();
                                         items.add(new suggestionsObject(entityJson.get("url").getAsString(),entityJson.get("price").getAsString(),entityJson.get("description").getAsString(),entityJson.get("itemname").getAsString(),"Image"));
                                     }
-                                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.this, items);
+                                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.context, items);
                                     gridview.setAdapter(customAdapter);
                                     gridLinear.setVisibility(View.VISIBLE);
                                     gridview.bringToFront();
@@ -492,28 +514,11 @@ public class ChatBot extends AppCompatActivity {
                                         JsonObject entityJson = jsonMenu.get(j).getAsJsonObject();
                                         items.add(new suggestionsObject(entityJson.get("url").getAsString(),entityJson.get("videoname").getAsString(), "Video"));
                                     }
-                                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.this, items);
+                                    CustomEntityAdapter customAdapter = new CustomEntityAdapter(ChatBot.context, items);
                                     gridview.setAdapter(customAdapter);
                                     gridLinear.setVisibility(View.VISIBLE);
                                     gridview.bringToFront();
                                 }
-
-                                if(!(response.getContext().get("options") == null)) {
-
-                                    JsonObject jsonContext = new JsonParser().parse(response.getContext().toString()).getAsJsonObject();
-                                    JsonArray jsoninstruct = jsonContext.get("options").getAsJsonArray();
-
-                                    ArrayList<String> instruct = new ArrayList<String>();
-                                    for(int j=0 ;j< jsoninstruct.size();j++) {
-                                       instruct.add(jsoninstruct.get(j).getAsString());
-                                    }
-
-
-
-                                    chatArrayAdapter.add(new ChatMessage(!side, instruct));
-
-                                }
-                                else
 
                                 sendChatMessageFromTheCall(res, 1);
                                 fortts = fortts + res + ",";
@@ -521,6 +526,26 @@ public class ChatBot extends AppCompatActivity {
                                 ImageUrl = null;
 
                             }
+                        }
+
+                        if(!(response.getContext().get("options") == null)) {
+
+                            JsonObject jsonContext = new JsonParser().parse(response.getContext().toString()).getAsJsonObject();
+                            JsonArray jsoninstruct = jsonContext.get("options").getAsJsonArray();
+
+                            System.out.println(jsoninstruct);
+                            ArrayList<String> instruct = new ArrayList<String>();
+                            ArrayList<String> urlInstruct = new ArrayList<String>();
+
+                            for(int j=0 ;j< jsoninstruct.size();j++) {
+                                JsonObject temp = jsoninstruct.get(j).getAsJsonObject();
+                                instruct.add(temp.get("name").getAsString());
+                                urlInstruct.add(temp.get("url").getAsString());
+
+                            }
+
+                            chatArrayAdapter.add(new ChatMessage(!side,instruct,urlInstruct));
+
                         }
                     }
 
